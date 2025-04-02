@@ -429,6 +429,58 @@ var UnityLoader = UnityLoader || {
                               var r = e.match(new RegExp("^" + this.stackTraceFormatWasm + "$")),
                                   n = t.demangleSymbol ? t.demangleSymbol(r[3]) : r[3],
                                   o = r[4].match(this.blobParseRegExp),
+                                  a = o && UnityLoader.Blobs[o[1]] && UnityLoader.Blobs[o[1]].url ? UnityLoader.Blobs[o[1]].url : "blob";
+                              return (n == r[3] ? r[1] : r[2] + n + " [wasm:" + r[3] + "]") + (r[4] ? " (" + (o ? a.substr(a.lastIndexOf("/") + 1) + o[2] : r[4]) + ")" : "");
+                          }.bind(this)
+                      )),
+                  r)
+                : r;
+        },
+        handler: function (e, t) {
+            var r = t ? this.demangle(e, t) : e.message;
+            if (
+                !(
+                    (t && t.errorhandler && t.errorhandler(r, e.filename, e.lineno)) ||
+                    (console.log("Invoking error handler due to\n" + r),
+                    "function" == typeof dump && dump("Invoking error handler due to\n" + r),
+                    r.indexOf("UnknownError") != -1 || r.indexOf("Program terminated with exit(0)") != -1 || this.didShowErrorMessage)
+                )
+            ) {
+                var r = "An error occurred running the Unity content on this page. See your browser JavaScript console for more info. The error was:\n" + r;
+                r.indexOf("DISABLE_EXCEPTION_CATCHING") != -1
+                    ? (r =
+                          "An exception has occurred, but exception handling has been disabled in this build. If you are the developer of this content, enable exceptions in your project WebGL player settings to be able to catch the exception or see the stack trace.")
+                    : r.indexOf("Cannot enlarge memory arrays") != -1
+                    ? (r = "Out of memory. If you are the developer of this content, try allocating more memory to your WebGL build in the WebGL player settings.")
+                    : (r.indexOf("Invalid array buffer length") == -1 && r.indexOf("Invalid typed array length") == -1 && r.indexOf("out of memory") == -1) ||
+                      (r = "The browser could not allocate enough memory for the WebGL content. If you are the developer of this content, try allocating less memory to your WebGL build in the WebGL player settings."),
+                    alert(r),
+                    (this.didShowErrorMessage = !0);
+            }
+        },
+        popup: function (e, t, r) {
+            r = r || [{ text: "OK" }];
+            var n = document.createElement("div");
+            n.style.cssText = "position: absolute; top: 50%; left: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%); text-align: center; border: 1px solid black; padding: 5px; background: #E8E8E8";
+            var o = document.createElement("span");
+            (o.textContent = t), n.appendChild(o), n.appendChild(document.createElement("br"));
+            for (var a = 0; a < r.length; a++) {
+                var i = document.createElement("button");
+                r[a].text && (i.textContent = r[a].text),
+                    r[a].callback && (i.onclick = r[a].callback),
+                    (i.style.margin = "5px"),
+                    i.addEventListener("click", function () {
+                        e.container.removeChild(n);
+                    }),
+                    n.appendChild(i);
+            }
+            e.container.appendChild(n);
+        },
+    },
+    Job: {
+        schedule: function (e, t, r, n, o) {
+            o = o || {};
+            var a = e.Jobs[t];
             if ((a || (a = e.Jobs[t] = { dependencies: {}, dependants: {} }), a.callback)) throw "[UnityLoader.Job.schedule] job '" + t + "' has been already scheduled";
             if ("function" != typeof n) throw "[UnityLoader.Job.schedule] job '" + t + "' has invalid callback";
             if ("object" != typeof o) throw "[UnityLoader.Job.schedule] job '" + t + "' has invalid parameters";
