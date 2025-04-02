@@ -48,13 +48,6 @@
 .webgl-content .spinner {
   vertical-align: middle;
 }
-.webgl-content .logo.Dark {
-  background-image: url(../TemplateData/y8-logo.png);
-  width: 206px;
-  height: 130px;
-  margin: 0 auto;
-  background-size: 206px 130px;
-}
 .webgl-content .progress.Dark .empty {
   background: #000;
 }
